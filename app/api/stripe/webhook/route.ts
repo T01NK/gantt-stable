@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 import { NextRequest, NextResponse } from 'next/server';
-import supabaseAdmin from '@/utils/supabaseAdmin'; // Erreur ici, voir ci-dessous
+import supabaseAdmin from '../../../../utils/supabaseAdmin';
 
 // On initialise Stripe (il lit la clé secrète automatiquement)
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);

@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 // C'est notre page de connexion dédiée
 import { useSupabase } from '../../components/SupabaseProvider';
 import { Auth } from '@supabase/auth-ui-react';

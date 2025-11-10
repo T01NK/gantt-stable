@@ -1,6 +1,6 @@
 'use client'; // Ce composant est "côté client"
 
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { createClient } from '../utils/supabase'; // On importe notre fonction
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../types_db'; // On importe le type
@@ -38,3 +38,22 @@ export const useSupabase = () => {
   }
   return context.supabase;
 };
+
+// (Ajoutez ce bloc tout en bas de components/SupabaseProvider.tsx)
+
+// Composant de protection qui gère les Hooks côté client
+export function ClientOnlyWrapper({ children }: { children: React.ReactNode }) {
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  if (!hasMounted) {
+    // Si nous sommes sur le serveur (ou avant l'hydratation), on retourne null
+    return null; 
+  }
+
+  // Sinon, on retourne le contenu normal
+  return <>{children}</>;
+}

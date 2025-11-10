@@ -1,30 +1,26 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
+// Import du composant de protection
+import { ClientOnlyWrapper } from '../../components/SupabaseProvider';
 
 // C'est notre page de connexion dédiée
 import { useSupabase } from '../../components/SupabaseProvider';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { useEffect } from 'react';
-
-// --- NOUVEAUTÉ : Importer useSearchParams ---
 import { useRouter, useSearchParams } from 'next/navigation';
-// --- FIN NOUVEAUTÉ ---
 
-export default function Login() {
+// Le composant principal qui contient la logique
+function LoginContent() {
   const supabase = useSupabase();
   const router = useRouter(); 
-
-  // --- NOUVEAUTÉ : Lire les paramètres de l'URL ---
   const searchParams = useSearchParams();
-  // --- FIN NOUVEAUTÉ ---
 
   useEffect(() => {
     // 1. Vérifie si l'utilisateur est DÉJÀ connecté (au chargement)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        router.push('/'); // Redirige vers la page principale
+        router.push('/'); 
       }
     });
 
@@ -32,28 +28,22 @@ export default function Login() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      // Si l'événement est une connexion réussie
       if (event === 'SIGNED_IN' && session) {
-        
-        // --- CORRECTION : Lire le paramètre d'URL ---
+        // CORRECTION : Lire et transmettre le paramètre d'URL
         const plan = searchParams.get('plan');
         
         if (plan === 'pro') {
-          // On le transmet à la page d'accueil !
-          router.push('/?plan=pro');
+          router.push('/?plan=pro'); // Redirige vers le paiement
         } else {
-          // Comportement normal
-          router.push('/');
+          router.push('/'); // Comportement normal
         }
-        // --- FIN CORRECTION ---
       }
     });
 
-    // 3. Nettoie l'écouteur quand on quitte la page
+    // 3. Nettoie l'écouteur
     return () => subscription.unsubscribe();
 
-  }, [supabase, router, searchParams]); // <-- On ajoute searchParams aux dépendances
-  // --- FIN DE LA MISE À JOUR ---
+  }, [supabase, router, searchParams]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-12">
@@ -71,4 +61,13 @@ export default function Login() {
       </div>
     </main>
   );
+}
+
+// Le composant exporté par défaut, enveloppé dans la protection côté client
+export default function Login() {
+    return (
+        <ClientOnlyWrapper>
+            <LoginContent />
+        </ClientOnlyWrapper>
+    );
 }

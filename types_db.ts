@@ -37,18 +37,21 @@ export type Database = {
           created_at: string
           gantt_data: string | null
           id: number
+          project_name: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string
           gantt_data?: string | null
           id?: number
+          project_name?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string
           gantt_data?: string | null
           id?: number
+          project_name?: string | null
           user_id?: string | null
         }
         Relationships: []

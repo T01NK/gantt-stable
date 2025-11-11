@@ -124,34 +124,31 @@ function HomeContent() {
     fetchProjects();
   }, [session, supabase]);
 
-
-  // Effect 4: Créer l'instance GANTT
+  // Effect 4: Créer l'instance GANTT (s'exécute UNE SEULE FOIS)
   useEffect(() => {
-    if (session && ganttContainerRef.current) {
+    // On vérifie que la session est chargée, que le conteneur SVG existe,
+    // et que l'instance GANTT n'a pas déjà été créée
+    if (session && ganttContainerRef.current && !ganttInstanceRef.current) {
+      
+      // On importe la librairie
       import('frappe-gantt').then((GanttModule) => {
         const FrappeGantt = GanttModule.default;
-        if (!ganttInstanceRef.current) {
-          const gantt = new FrappeGantt(ganttContainerRef.current!, [], {
-            header_height: 50, bar_height: 20, step: 24,
-            view_modes: ['Day', 'Week', 'Month'], bar_corner_radius: 3,
-          });
-          ganttInstanceRef.current = gantt;
-        }
-
-        // Lancement initial + Fix du bug d'affichage
-        if (ganttInstanceRef.current) {
-          const tasksToRender = parseInputToTasks(inputText);
-          ganttInstanceRef.current.refresh(tasksToRender);
         
-          // Fix de redimensionnement :
-          setTimeout(() => {
-            ganttInstanceRef.current.refresh(tasksToRender);
-          }, 200);
-        }
-        // --- FIN CORRECTION ---
+        // On crée l'instance
+        const gantt = new FrappeGantt(ganttContainerRef.current!, [], {
+          header_height: 50, bar_height: 20, step: 24,
+          view_modes: ['Day', 'Week', 'Month'], bar_corner_radius: 3,
+        });
+        
+        // On la stocke dans notre "Ref" pour qu'elle survive aux re-rendus
+        ganttInstanceRef.current = gantt;
+        
+        // On charge les tâches initiales qui sont dans la zone de texte
+        const initialTasks = parseInputToTasks(inputText);
+        ganttInstanceRef.current.refresh(initialTasks);
       });
     }
-  }, [session, ganttContainerRef, inputText]);
+  }, [session]); // Dépend UNIQUEMENT de la session.
 
 
   // ------------------------------------------
@@ -191,16 +188,16 @@ function HomeContent() {
 
   // Handler GANTT (Bouton Générer)
   const handleGenerateGantt = () => {
-    if (ganttInstanceRef.current && parseInputToTasks) {
+    if (ganttInstanceRef.current) {
       const newTasks = parseInputToTasks(inputText);
       ganttInstanceRef.current.refresh(newTasks);
-
-      // --- CORRECTION CLÉ ICI ---
-      // Forcer le redessin après un délai
+      
+      // Fix: Forcer un 2e refresh pour la hauteur
       setTimeout(() => {
-          ganttInstanceRef.current.refresh(newTasks);
+          if(ganttInstanceRef.current) {
+              ganttInstanceRef.current.refresh(newTasks);
+          }
       }, 100);
-      // --- FIN CORRECTION ---
     }
   };
   
@@ -262,22 +259,20 @@ function HomeContent() {
     const foundProject = projects.find(p => p.id === projectId);
 
     if (foundProject && foundProject.gantt_data) {
-      
-      // 1. Mettre à jour l'état de la zone de texte
-      setInputText(foundProject.gantt_data);
+      const loadedText = foundProject.gantt_data;
+      setInputText(loadedText); // Met à jour la zone de texte
 
-      // --- CORRECTION CLÉ ICI ---
-      // 2. Tenter le rafraîchissement immédiat de l'instance
       if (ganttInstanceRef.current) {
-          const newTasks = parseInputToTasks(foundProject.gantt_data);
-          ganttInstanceRef.current.refresh(newTasks);
-
-          // 3. Forcer le redessin après un court délai pour contourner le bug d'affichage
-          setTimeout(() => {
-              ganttInstanceRef.current.refresh(newTasks);
-          }, 100); 
+        const newTasks = parseInputToTasks(loadedText);
+        ganttInstanceRef.current.refresh(newTasks);
+        
+        // Fix: Forcer un 2e refresh pour la hauteur
+        setTimeout(() => {
+            if(ganttInstanceRef.current) {
+                ganttInstanceRef.current.refresh(newTasks);
+            }
+        }, 100);
       }
-      // --- FIN CORRECTION ---
     }
   };
 

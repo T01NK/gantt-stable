@@ -387,3 +387,9 @@
 .gantt .bar-wrapper:hover .date-range-highlight {
   display: block;
 }
+
+/* --- FIX THÈME SOMBRE --- */
+/* Corrige le "carré blanc" du mois actuel en mode sombre */
+.dark .gantt-container .current-upper {
+    background: #1a1a1a; 
+}

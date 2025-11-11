@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, Suspense } from 'react';
 import type { Task } from 'frappe-gantt'; 
-import type { Database } from '../types_db';
 import { useSupabase } from '../components/SupabaseProvider';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
@@ -11,8 +10,7 @@ import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import LandingLayout from '../components/LandingLayout';
 import Sidebar from '../components/Sidebar';
-
-type Project = Database['public']['Tables']['projects']['Row'];
+import type { Project } from '../utils/appTypes';
 
 // --- Le composant principal est renommé pour l'encapsulation ---
 function HomeContent() {

@@ -1,6 +1,6 @@
 // components/Sidebar.tsx
 import React from 'react';
-import type { Project } from '../app/page'; // On importe le type Project
+import type { Project } from '../utils/appTypes';
 import Link from 'next/link';
 
 // On définit les propriétés que ce composant recevra de la page principale

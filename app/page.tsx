@@ -189,11 +189,18 @@ function HomeContent() {
     return tasks;
   };
 
-  // Handler GANTT
+  // Handler GANTT (Bouton Générer)
   const handleGenerateGantt = () => {
     if (ganttInstanceRef.current && parseInputToTasks) {
       const newTasks = parseInputToTasks(inputText);
       ganttInstanceRef.current.refresh(newTasks);
+
+      // --- CORRECTION CLÉ ICI ---
+      // Forcer le redessin après un délai
+      setTimeout(() => {
+          ganttInstanceRef.current.refresh(newTasks);
+      }, 100);
+      // --- FIN CORRECTION ---
     }
   };
   
@@ -254,11 +261,24 @@ function HomeContent() {
     const projectId = Number(e.target.value);
     const foundProject = projects.find(p => p.id === projectId);
 
-    //  setInputText(foundProject.gantt_data);
-    //    const newTasks = parseInputToTasks(foundProject.gantt_data);
-    //    ganttInstanceRef.current.refresh(newTasks);
-    //  }
-    //}
+    if (foundProject && foundProject.gantt_data) {
+      
+      // 1. Mettre à jour l'état de la zone de texte
+      setInputText(foundProject.gantt_data);
+
+      // --- CORRECTION CLÉ ICI ---
+      // 2. Tenter le rafraîchissement immédiat de l'instance
+      if (ganttInstanceRef.current) {
+          const newTasks = parseInputToTasks(foundProject.gantt_data);
+          ganttInstanceRef.current.refresh(newTasks);
+
+          // 3. Forcer le redessin après un court délai pour contourner le bug d'affichage
+          setTimeout(() => {
+              ganttInstanceRef.current.refresh(newTasks);
+          }, 100); 
+      }
+      // --- FIN CORRECTION ---
+    }
   };
 
   // ------------------------------------------

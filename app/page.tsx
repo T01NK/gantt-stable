@@ -140,14 +140,15 @@ function HomeContent() {
 
         // Lancement initial + Fix du bug d'affichage
         if (ganttInstanceRef.current) {
-            const initialTasks = parseInputToTasks(inputText);
-            ganttInstanceRef.current.refresh(initialTasks);
-            
-            // On force un rafraîchissement après 200ms
-            setTimeout(() => {
-                ganttInstanceRef.current.refresh(initialTasks);
-            }, 200);
+          const tasksToRender = parseInputToTasks(inputText);
+          ganttInstanceRef.current.refresh(tasksToRender);
+        
+          // Fix de redimensionnement :
+          setTimeout(() => {
+            ganttInstanceRef.current.refresh(tasksToRender);
+          }, 200);
         }
+        // --- FIN CORRECTION ---
       });
     }
   }, [session, ganttContainerRef, inputText]);
@@ -253,13 +254,11 @@ function HomeContent() {
     const projectId = Number(e.target.value);
     const foundProject = projects.find(p => p.id === projectId);
 
-    if (foundProject && foundProject.gantt_data) {
-      setInputText(foundProject.gantt_data);
-      if (ganttInstanceRef.current) {
-        const newTasks = parseInputToTasks(foundProject.gantt_data);
-        ganttInstanceRef.current.refresh(newTasks);
-      }
-    }
+    //  setInputText(foundProject.gantt_data);
+    //    const newTasks = parseInputToTasks(foundProject.gantt_data);
+    //    ganttInstanceRef.current.refresh(newTasks);
+    //  }
+    //}
   };
 
   // ------------------------------------------

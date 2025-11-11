@@ -1,6 +1,6 @@
 'use client'; 
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import type { Task } from 'frappe-gantt'; 
 import type { Database } from '../types_db';
 import { useSupabase } from '../components/SupabaseProvider';
@@ -9,25 +9,29 @@ import { ThemeSupa } from '@supabase/auth-ui-shared';
 import type { Session } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Sidebar from '../components/Sidebar'; // Le nouveau composant
-import Header from '../components/Header';
+import LandingLayout from '../components/LandingLayout';
+import Sidebar from '../components/Sidebar';
 
-export type Project = Database['public']['Tables']['projects']['Row'];
+type Project = Database['public']['Tables']['projects']['Row'];
 
-export default function Home() {
+// --- Le composant principal est renommé pour l'encapsulation ---
+function HomeContent() {
   const ganttContainerRef = useRef<SVGSVGElement | null>(null);
-  const ganttInstanceRef = useRef<any | null>(null); // Pour l'instance GANTT
+  const ganttInstanceRef = useRef<any | null>(null);
 
   const [inputText, setInputText] = useState(
     "task1, Tâche Parente 1, 2025-11-05, 2025-11-08\n" +
-    "  task2, Sous-tâche 1.1 (indentée), 2025-11-06, 2025-11-07\n"
+    "  task2, Sous-tâche 1.1 (indentée), 2025-11-06, 2025-11-07\n" +
+    "task3, Tâche Parente 2 (dépend de 1), 2025-11-09, 2025-11-12, $task1\n" +
+    "task4, Tâche Parente 3, 2025-11-10, 2025-11-13\n" +
+    "  task5, Sous-tâche 3.1, 2025-11-11, 2025-11-12, $task2"
   );
   
   const supabase = useSupabase();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [isPro, setIsPro] = useState(false); // État du statut Pro
+  const [isPro, setIsPro] = useState(false);
 
   // Pour la redirection Pro
   const searchParams = useSearchParams();
@@ -95,7 +99,7 @@ export default function Home() {
     const fetchProjects = async () => {
       if (!session) return;
 
-      // Définir isPro (même si on ne l'utilise que dans la sidebar, c'est crucial)
+      // Définir isPro
       const { data: profile } = await supabase
           .from('profiles')
           .select('subscription_status')
@@ -110,7 +114,7 @@ export default function Home() {
       const { data, error } = await supabase
         .from('projects')
         .select('id, project_name, gantt_data')
-        .order('created_at', { ascending: false }); // On les ordonne par date récente
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error("Erreur lors du chargement des projets :", error);
@@ -124,12 +128,10 @@ export default function Home() {
 
 
   // Effect 4: Créer l'instance GANTT
-  // Effect 4: Créer l'instance GANTT
   useEffect(() => {
     if (session && ganttContainerRef.current) {
       import('frappe-gantt').then((GanttModule) => {
         const FrappeGantt = GanttModule.default;
-
         if (!ganttInstanceRef.current) {
           const gantt = new FrappeGantt(ganttContainerRef.current!, [], {
             header_height: 50, bar_height: 20, step: 24,
@@ -138,19 +140,18 @@ export default function Home() {
           ganttInstanceRef.current = gantt;
         }
 
-        // Lancement initial + Fix du bug d'affichage (setTimeout)
+        // Lancement initial + Fix du bug d'affichage
         if (ganttInstanceRef.current) {
             const initialTasks = parseInputToTasks(inputText);
             ganttInstanceRef.current.refresh(initialTasks);
-
-            // On force un rafraîchissement après 200ms pour s'assurer que le SVG est bien dimensionné
+            
+            // On force un rafraîchissement après 200ms
             setTimeout(() => {
                 ganttInstanceRef.current.refresh(initialTasks);
             }, 200);
         }
       });
     }
-  // Ajoutez 'inputText' aux dépendances ici pour que la page d'accueil se lance correctement
   }, [session, ganttContainerRef, inputText]);
 
 
@@ -158,9 +159,8 @@ export default function Home() {
   // FONCTIONS (PARSER/HANDLER)
   // ------------------------------------------
 
-  // Fonction de Parsing (ne change pas)
+  // Fonction de Parsing
   const parseInputToTasks = (text: string): Task[] => {
-    // ... (votre code de parsing est ici)
     const lines = text.split('\n');
     const tasks: Task[] = [];
     let lastParentId: string | null = null; 
@@ -190,7 +190,7 @@ export default function Home() {
     return tasks;
   };
 
-  // Handler GANTT (ne change pas)
+  // Handler GANTT
   const handleGenerateGantt = () => {
     if (ganttInstanceRef.current && parseInputToTasks) {
       const newTasks = parseInputToTasks(inputText);
@@ -198,12 +198,12 @@ export default function Home() {
     }
   };
   
-  // Handler Déconnexion (ne change pas)
+  // Handler Déconnexion
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
 
-  // Handler Sauvegarde (ne change pas)
+  // Handler Sauvegarde
   const handleSave = async () => {
     if (!session?.user) {
       alert("Erreur : Utilisateur non trouvé.");
@@ -238,7 +238,7 @@ export default function Home() {
         gantt_data: inputText,
         project_name: projectName
       })
-      .select() // On demande l'objet sauvegardé (pour l'ID)
+      .select()
       .single();
 
     if (saveError) {
@@ -246,12 +246,11 @@ export default function Home() {
       console.error(saveError);
     } else {
       alert("Projet sauvegardé avec succès !");
-      // On ajoute l'objet sauvegardé (avec le vrai ID de la base de données)
       setProjects([savedProject as Project, ...projects]);
     }
   };
 
-  // Handler Chargement (ne change pas)
+  // Handler Chargement
   const handleLoadProject = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const projectId = Number(e.target.value);
     const foundProject = projects.find(p => p.id === projectId);
@@ -279,142 +278,8 @@ export default function Home() {
 
   // Rendu de la Vitrine (si déconnecté)
   if (!session) {
-    // ... (votre code de vitrine ne change pas)
     return (
-        <main className="flex min-h-screen flex-col items-center p-12 pt-32 pb-24">
-            <Header />
-          
-          {/* --- 1. "Hero Section" --- */}
-          <section className="flex flex-col items-center text-center max-w-3xl">
-            <h1 className="text-6xl font-bold mb-6">
-              Créez des diagrammes de GANTT
-              <br />
-              <span className="text-blue-500">en quelques secondes.</span>
-            </h1>
-            <p className="text-xl text-gray-400 mb-10">
-              Notre outil simplifie la gestion de projet. Entrez vos tâches en texte brut,
-              visualisez instantanément votre planning et sauvegardez vos projets
-              dans le cloud avec notre offre Pro.
-            </p>
-            <Link
-              href="/login"
-              className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-md text-lg hover:bg-blue-700 transition-colors"
-            >
-              Commencer gratuitement
-            </Link>
-          </section>
-
-          {/* --- 2. Section "Fonctionnalités" --- */}
-          <section className="w-full max-w-5xl mt-24">
-            <h2 className="text-4xl font-bold text-center mb-12">
-              Tout ce qu'il vous faut, sans le superflu.
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
-              
-              {/* Fonctionnalité 1 */}
-              <div className="flex flex-col items-center">
-                <p className="text-4xl mb-3">⚡️</p>
-                <h3 className="text-2xl font-semibold mb-2">Ultra Rapide</h3>
-                <p className="text-gray-400">
-                  Pas de chargement, pas de menus complexes. Écrivez en texte brut,
-                  votre GANTT se met à jour instantanément.
-                </p>
-              </div>
-
-              {/* Fonctionnalité 2 */}
-              <div className="flex flex-col items-center">
-                <p className="text-4xl mb-3">💾</p>
-                <h3 className="text-2xl font-semibold mb-2">Sauvegarde "Pro"</h3>
-                <p className="text-gray-400">
-                  Ne perdez jamais votre travail. Notre offre Pro vous permet de
-                  sauvegarder et charger vos projets depuis le cloud.
-                </p>
-              </div>
-
-              {/* Fonctionnalité 3 */}
-              <div className="flex flex-col items-center">
-                <p className="text-4xl mb-3">🔗</p>
-                <h3 className="text-2xl font-semibold mb-2">Dépendances Simples</h3>
-                <p className="text-gray-400">
-                  Reliez vos tâches avec une syntaxe simple (`$tache1`) pour
-                  visualiser les dépendances de votre projet.
-                </p>
-              </div>
-              
-            </div>
-          </section>
-
-          {/* --- 3. La Section "Tarifs" --- */}
-          <section className="w-full max-w-4xl mt-24">
-            <h2 className="text-4xl font-bold text-center mb-12">
-              Un tarif simple et transparent.
-            </h2>
-            
-            <div className="flex flex-col md:flex-row justify-center gap-8">
-
-              {/* Carte "Gratuit" */}
-              <div className="w-full md:w-1/2 lg:w-1/3 border border-gray-700 rounded-lg p-8 flex flex-col">
-                <h3 className="text-2xl font-semibold mb-4">Gratuit</h3>
-                <p className="text-5xl font-bold mb-4">0 €</p>
-                <p className="text-gray-400 mb-6">Pour les projets rapides</p>
-                <ul className="space-y-2 mb-8 text-gray-300">
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✔</span> Générateur de GANTT
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✔</span> Parser de texte
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✔</span> Dépendances simples
-                  </li>
-                </ul>
-                <div className="mt-auto">
-                  <Link
-                    href="/login"
-                    className="w-full block text-center px-6 py-3 bg-gray-700 text-white font-semibold rounded-md hover:bg-gray-600 transition-colors"
-                  >
-                    Commencer
-                  </Link>
-                </div>
-              </div>
-
-              {/* Carte "Pro" (Mise en avant) */}
-              <div className="w-full md:w-1/2 lg:w-1/3 border-2 border-blue-500 rounded-lg p-8 flex flex-col relative">
-                <span className="absolute top-0 -translate-y-1/2 bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  LE PLUS POPULAIRE
-                </span>
-                
-                <h3 className="text-2xl font-semibold mb-4 text-blue-400">Pro</h3>
-                <p className="text-5xl font-bold mb-4">5 €<span className="text-lg font-normal text-gray-400">/mois</span></p>
-                <p className="text-gray-400 mb-6">Pour les pros organisés</p>
-                <ul className="space-y-2 mb-8 text-gray-300">
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✔</span> <span className="font-bold">Tout ce qui est gratuit</span>
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✔</span> Sauvegarde illimitée de projets
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✔</span> Chargement des projets
-                  </li>
-                  <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✔</span> Support prioritaire
-                  </li>
-                </ul>
-                <div className="mt-auto">
-                  <Link
-                    href="/login"
-                    className="w-full block text-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    Passer Pro
-                  </Link>
-                </div>
-              </div>
-
-            </div>
-          </section>
-        </main>
+      <LandingLayout />
     );
   }
 
@@ -449,11 +314,20 @@ export default function Home() {
         </p>
 
         {/* Le GANTT lui-même */}
-        <div className="grow w-full border border-gray-700 rounded-lg p-4 bg-gray-900 overflow-hidden">
-          <svg ref={ganttContainerRef} className="w-full h-full"></svg> 
+        <div className="grow w-full border border-gray-700 rounded-lg p-4 bg-gray-900 relative overflow-hidden">
+          <svg ref={ganttContainerRef} className="w-full h-full"></svg>
         </div>
 
       </main>
     </div>
   );
+}
+
+// Le composant final EXPORTÉ
+export default function Home() {
+    return (
+        <Suspense>
+            <HomeContent />
+        </Suspense>
+    );
 }

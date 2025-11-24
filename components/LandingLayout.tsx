@@ -1,144 +1,125 @@
 'use client';
 
 import Link from 'next/link';
-import Header from './Header'; // Assurez-vous d'avoir cet import si vous n'avez pas renommé le Header
 
-// Ce composant contient tout le contenu de la Vitrine, protégé par 'use client'
 export default function LandingLayout() {
     return (
-        <main className="flex min-h-screen flex-col items-center p-12 pt-32 pb-24">
-            <Header />
-
-            {/* --- 1. "Hero Section" --- */}
-            <section className="flex flex-col items-center text-center max-w-3xl">
-                <h1 className="text-6xl font-bold mb-6">
-                    Créez des diagrammes de GANTT
-                    <br />
-                    <span className="text-blue-500">en quelques secondes.</span>
-                </h1>
-                <p className="text-xl text-gray-400 mb-10">
-                    Notre outil simplifie la gestion de projet. Entrez vos tâches en texte brut,
-                    visualisez instantanément votre planning et sauvegardez vos projets
-                    dans le cloud avec notre offre Pro.
-                </p>
-                <Link
-                    href="/login"
-                    className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-md text-lg hover:bg-blue-700 transition-colors"
-                >
-                    Commencer gratuitement
-                </Link>
-            </section>
-
-            {/* --- 2. Section "Fonctionnalités" --- */}
-            <section className="w-full max-w-5xl mt-24">
-                <h2 className="text-4xl font-bold text-center mb-12">
-                    Tout ce qu'il vous faut, sans le superflu.
-                </h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
-
-                    {/* Fonctionnalité 1 */}
-                    <div className="flex flex-col items-center">
-                        <p className="text-4xl mb-3">⚡️</p>
-                        <h3 className="text-2xl font-semibold mb-2">Ultra Rapide</h3>
-                        <p className="text-gray-400">
-                            Pas de chargement, pas de menus complexes. Écrivez en texte brut,
-                            votre GANTT se met à jour instantanément.
-                        </p>
-                    </div>
-
-                    {/* Fonctionnalité 2 */}
-                    <div className="flex flex-col items-center">
-                        <p className="text-4xl mb-3">💾</p>
-                        <h3 className="text-2xl font-semibold mb-2">Sauvegarde "Pro"</h3>
-                        <p className="text-gray-400">
-                            Ne perdez jamais votre travail. Notre offre Pro vous permet de
-                            sauvegarder et charger vos projets depuis le cloud.
-                        </p>
-                    </div>
-
-                    {/* Fonctionnalité 3 */}
-                    <div className="flex flex-col items-center">
-                        <p className="text-4xl mb-3">🔗</p>
-                        <h3 className="text-2xl font-semibold mb-2">Dépendances Simples</h3>
-                        <p className="text-gray-400">
-                            Reliez vos tâches avec une syntaxe simple (`$tache1`) pour
-                            visualiser les dépendances de votre projet.
-                        </p>
-                    </div>
-
-                </div>
-            </section>
-
-            {/* --- 3. La Section "Tarifs" --- */}
-            <section className="w-full max-w-4xl mt-24">
-                <h2 className="text-4xl font-bold text-center mb-12">
-                    Un tarif simple et transparent.
-                </h2>
-
-                <div className="flex flex-col md:flex-row justify-center gap-8">
-
-                    {/* Carte "Gratuit" */}
-                    <div className="w-full md:w-1/2 lg:w-1/3 border border-gray-700 rounded-lg p-8 flex flex-col">
-                        <h3 className="text-2xl font-semibold mb-4">Gratuit</h3>
-                        <p className="text-5xl font-bold mb-4">0 €</p>
-                        <p className="text-gray-400 mb-6">Pour les projets rapides</p>
-                        <ul className="space-y-2 mb-8 text-gray-300">
-                            <li className="flex items-center">
-                                <span className="text-green-500 mr-2">✔</span> Générateur de GANTT
-                            </li>
-                            <li className="flex items-center">
-                                <span className="text-green-500 mr-2">✔</span> Parser de texte
-                            </li>
-                            <li className="flex items-center">
-                                <span className="text-green-500 mr-2">✔</span> Dépendances simples
-                            </li>
-                        </ul>
-                        <div className="mt-auto">
-                            <Link
-                                href="/login"
-                                className="w-full block text-center px-6 py-3 bg-gray-700 text-white font-semibold rounded-md hover:bg-gray-600 transition-colors"
-                            >
-                                Commencer
-                            </Link>
+        <main className="flex min-h-screen flex-col items-center bg-white text-slate-900 font-sans">
+            
+            {/* HEADER VITRINE (Light) */}
+            <header className="w-full absolute top-0 left-0 p-6 z-10">
+                <nav className="max-w-7xl mx-auto flex justify-between items-center">
+                    <Link href="/" className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                        <div className="p-1.5 bg-blue-600 rounded-lg">
+                            {/* Petite icône simple */}
+                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                         </div>
-                    </div>
+                        Gantt<span className="text-blue-600">Intelligent</span>
+                    </Link>
 
-                    {/* Carte "Pro" (Mise en avant) */}
-                    <div className="w-full md:w-1/2 lg:w-1/3 border-2 border-blue-500 rounded-lg p-8 flex flex-col relative">
-                        <span className="absolute top-0 -translate-y-1/2 bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                            LE PLUS POPULAIRE
+                    <Link
+                        href="/login"
+                        className="px-5 py-2.5 bg-slate-900 text-white font-medium rounded-lg text-sm hover:bg-slate-800 transition-colors shadow-sm"
+                    >
+                        Connexion
+                    </Link>
+                </nav>
+            </header>
+            
+            <div className="pt-40 pb-24 px-6 w-full flex flex-col items-center">
+                
+                {/* 1. HERO SECTION */}
+                <section className="flex flex-col items-center text-center max-w-4xl">
+                    <div className="inline-block px-3 py-1 mb-6 text-xs font-semibold tracking-wider text-blue-600 uppercase bg-blue-50 rounded-full">
+                        Nouveau : Gestion par IA
+                    </div>
+                    <h1 className="text-5xl md:text-7xl font-extrabold mb-8 text-slate-900 tracking-tight leading-tight">
+                        Planifiez vos projets <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                            sans complexité.
                         </span>
+                    </h1>
+                    <p className="text-xl text-slate-500 mb-10 max-w-2xl leading-relaxed">
+                        L'outil de GANTT conçu pour les ingénieurs. Simple, rapide, et esthétique.
+                        Oubliez les usines à gaz, concentrez-vous sur la livraison.
+                    </p>
+                    <Link
+                        href="/login"
+                        className="px-8 py-4 bg-blue-600 text-white font-bold rounded-xl text-lg hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-500/30"
+                    >
+                        Commencer gratuitement
+                    </Link>
+                </section>
 
-                        <h3 className="text-2xl font-semibold mb-4 text-blue-400">Pro</h3>
-                        <p className="text-5xl font-bold mb-4">5 €<span className="text-lg font-normal text-gray-400">/mois</span></p>
-                        <p className="text-gray-400 mb-6">Pour les pros organisés</p>
-                        <ul className="space-y-2 mb-8 text-gray-300">
-                            <li className="flex items-center">
-                                <span className="text-green-500 mr-2">✔</span> <span className="font-bold">Tout ce qui est gratuit</span>
-                            </li>
-                            <li className="flex items-center">
-                                <span className="text-green-500 mr-2">✔</span> Sauvegarde illimitée de projets
-                            </li>
-                            <li className="flex items-center">
-                                <span className="text-green-500 mr-2">✔</span> Chargement des projets
-                            </li>
-                            <li className="flex items-center">
-                                <span className="text-green-500 mr-2">✔</span> Support prioritaire
-                            </li>
-                        </ul>
-                        <div className="mt-auto">
-                            <Link
-                                href="/login"
-                                className="w-full block text-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors"
-                            >
-                                Passer Pro
-                            </Link>
+                {/* 2. FONCTIONNALITÉS */}
+                <section className="w-full max-w-6xl mt-32">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {/* Feature 1 */}
+                        <div className="p-8 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-100 transition">
+                            <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mb-6 text-2xl">⚡️</div>
+                            <h3 className="text-xl font-bold text-slate-800 mb-3">Ultra Rapide</h3>
+                            <p className="text-slate-600 leading-relaxed">
+                                Interface réactive. Ajoutez des tâches, déplacez-les, tout se met à jour instantanément.
+                            </p>
+                        </div>
+                        {/* Feature 2 */}
+                        <div className="p-8 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-100 transition">
+                            <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mb-6 text-2xl">💾</div>
+                            <h3 className="text-xl font-bold text-slate-800 mb-3">Sauvegarde Cloud</h3>
+                            <p className="text-slate-600 leading-relaxed">
+                                Retrouvez vos projets n'importe où. Sauvegarde sécurisée et chargement instantané.
+                            </p>
+                        </div>
+                        {/* Feature 3 */}
+                        <div className="p-8 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-100 transition">
+                            <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mb-6 text-2xl">✨</div>
+                            <h3 className="text-xl font-bold text-slate-800 mb-3">Esthétique</h3>
+                            <p className="text-slate-600 leading-relaxed">
+                                Un design clair et moderne pour présenter vos plannings à vos clients ou professeurs.
+                            </p>
                         </div>
                     </div>
+                </section>
 
-                </div>
-            </section>
+                {/* 3. TARIFS */}
+                <section className="w-full max-w-5xl mt-32 mb-20">
+                    <h2 className="text-3xl font-bold text-center mb-16 text-slate-900">Un tarif transparent</h2>
+                    
+                    <div className="flex flex-col md:flex-row justify-center gap-8 items-stretch">
+                        
+                        {/* Gratuit */}
+                        <div className="flex-1 p-8 rounded-2xl border border-slate-200 bg-white">
+                            <h3 className="text-xl font-bold text-slate-800 mb-2">Gratuit</h3>
+                            <div className="text-4xl font-bold mb-6">0€</div>
+                            <ul className="space-y-4 mb-8 text-slate-600">
+                                <li className="flex gap-3"><span className="text-green-500">✓</span> Création illimitée</li>
+                                <li className="flex gap-3"><span className="text-green-500">✓</span> Export visuel</li>
+                                <li className="flex gap-3"><span className="text-slate-300">✕</span> Pas de sauvegarde</li>
+                            </ul>
+                            <Link href="/login" className="block w-full py-3 text-center bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded-lg transition">
+                                Découvrir
+                            </Link>
+                        </div>
+
+                        {/* Pro */}
+                        <div className="flex-1 p-8 rounded-2xl border-2 border-blue-600 bg-blue-50/50 relative">
+                            <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg uppercase">Populaire</div>
+                            <h3 className="text-xl font-bold text-blue-900 mb-2">Pro</h3>
+                            <div className="text-4xl font-bold mb-6 text-blue-600">5€ <span className="text-lg text-slate-500 font-normal">/mois</span></div>
+                            <ul className="space-y-4 mb-8 text-slate-700">
+                                <li className="flex gap-3"><span className="text-blue-600">✓</span> Tout le gratuit</li>
+                                <li className="flex gap-3"><span className="text-blue-600">✓</span> <strong>Sauvegarde Cloud</strong></li>
+                                <li className="flex gap-3"><span className="text-blue-600">✓</span> <strong>Chargement de projets</strong></li>
+                            </ul>
+                            <Link href="/login?plan=pro" className="block w-full py-3 text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition shadow-md">
+                                Devenir Pro
+                            </Link>
+                        </div>
+
+                    </div>
+                </section>
+
+            </div>
         </main>
     );
 }

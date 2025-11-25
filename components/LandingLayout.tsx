@@ -19,7 +19,7 @@ export default function LandingLayout() {
 
                     <Link
                         href="/login"
-                        className="px-5 py-2.5 bg-slate-900 text-white font-medium rounded-lg text-sm hover:bg-slate-800 transition-colors shadow-sm"
+                        className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg text-sm hover:bg-slate-800 transition-colors shadow-sm"
                     >
                         Connexion
                     </Link>

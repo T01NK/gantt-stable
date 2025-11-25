@@ -5,7 +5,6 @@ import { cookies } from 'next/headers';
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  // "next" est l'endroit où l'on veut aller après (par défaut /)
   const next = searchParams.get('next') ?? '/';
 
   if (code) {
@@ -29,7 +28,6 @@ export async function GET(request: NextRequest) {
       }
     );
     
-    // C'est ici que la magie opère : on échange le code Google contre une session
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     
     if (!error) {
@@ -37,6 +35,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Si erreur, on renvoie à la page d'accueil
-  return NextResponse.redirect(`${origin}/auth/auth-code-error`);
+  // En cas d'erreur, retour à l'accueil
+  return NextResponse.redirect(`${origin}/login?error=auth`);
 }

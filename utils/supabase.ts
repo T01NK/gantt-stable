@@ -11,7 +11,7 @@ export const createClient = () =>
       auth: {
         autoRefreshToken: true,
         persistSession: true,
-        detectSessionInUrl: false,
+        detectSessionInUrl: true,
       },
       // Ajout du fetch global
       global: {

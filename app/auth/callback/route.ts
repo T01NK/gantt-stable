@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get('next') ?? '/';
 
   if (code) {
-    const cookieStore = await cookies();
+    const cookieStore = await cookies(); // await est important ici
     
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
       }
     );
     
+    // Échange le code contre une session
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     
     if (!error) {
@@ -35,6 +36,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // En cas d'erreur, retour à l'accueil
-  return NextResponse.redirect(`${origin}/login?error=auth`);
+  // Si erreur, retour à la page de login
+  return NextResponse.redirect(`${origin}/login`);
 }

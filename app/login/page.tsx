@@ -57,8 +57,8 @@ function LoginContent() {
           appearance={{ theme: ThemeSupa }}
           theme="light"
           providers={['google']}
-          // On force la redirection vers notre nouvelle route API
-          redirectTo={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/callback`}
+          // On remet l'URL sur /auth/callback car c'est celle que Google a mémorisée
+          redirectTo={`${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`}
         />
       </div>
     </main>

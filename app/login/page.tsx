@@ -55,8 +55,10 @@ function LoginContent() {
         <Auth
           supabaseClient={supabase}
           appearance={{ theme: ThemeSupa }}
-          theme="dark"
+          theme="light"
           providers={['github', 'google']}
+          // On force la redirection vers notre nouvelle route API
+          redirectTo={`${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`}
         />
       </div>
     </main>

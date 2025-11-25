@@ -28,9 +28,8 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased dark bg-black text-white`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 text-slate-900`}
       >
-        {/* Le Provider enveloppe les enfants, sans propriété */}
         <SupabaseProvider>
           {children}
         </SupabaseProvider>

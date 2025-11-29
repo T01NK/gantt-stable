@@ -155,41 +155,113 @@ function HomeContent() {
 
 
   // --- FONCTION DE SAUVEGARDE (Inchangée) ---
-  const handleSave = async () => {
-    if (!session?.user) { alert("Erreur : Utilisateur non trouvé."); return; }
-    
-    const { data: profile, error: profileError } = await supabase.from('profiles').select('subscription_status').eq('id', session.user.id).single();
-    if (profileError) { alert("Erreur profil."); return; }
-    
-    // Vérification de l'abonnement
-    if (profile.subscription_status === 'free') {
-      fetch('/api/stripe/create-checkout', { method: 'POST' })
-        .then((res) => res.json()).then((data) => { if (data.url) { window.location.href = data.url; }})
-        .catch((e) => { console.error(e); alert('Erreur paiement.'); });
-      return;
-    }
+  // Dans app/page.tsx
 
-    const projectName = window.prompt("Nom du projet :", currentProjectName);
-    if (!projectName) return;
-    
-    setCurrentProjectName(projectName);
+  // ... les autres états ...
 
-    const { error: saveError, data: savedProject } = await supabase
-      .from('projects')
-      .insert({ 
-        user_id: session.user.id, 
-        gantt_data: JSON.stringify(tasks), 
-        project_name: projectName 
-      })
-      .select()
-      .single();
+    // Sauvegarde (Version de débogage)
+    const handleSave = async () => {
+      console.log("--- DÉBUT DU PROCESSUS DE SAUVEGARDE ---");
 
-    if (saveError) { alert("Erreur sauvegarde."); } 
-    else { 
-        alert("Projet sauvegardé avec succès !");
-        if (savedProject) setSavedProjects([savedProject, ...savedProjects]);
-    }
-  };
+      // 1. Vérification de la session
+      if (!session?.user) {
+        console.error("ERREUR BLOQUANTE : Aucune session utilisateur active.");
+        alert("Erreur : Vous ne semblez pas connecté.");
+        return;
+      } 
+      console.log("1. Session OK. Utilisateur ID :", session.user.id);
+
+      // 2. Vérification du statut Pro (Paywall)
+      console.log("2. Tentative de récupération du profil pour vérifier le statut...");
+      // On utilise maybeSingle() pour ne pas lever d'erreur si le profil n'existe pas encore
+      const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('subscription_status')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+      if (profileError) {
+          console.error("ERREUR lors de la récupération du profil :", profileError.message);
+          alert("Erreur technique lors de la vérification du profil.");
+          return;
+      }
+
+      // C'EST SOUVENT ICI QUE ÇA BLOQUE AVEC GOOGLE :
+      if (!profile) {
+          console.error("ERREUR BLOQUANTE : Profil introuvable dans la table 'public.profiles'.");
+          console.warn("Hypothèse : Le trigger de création de profil automatique n'a pas fonctionné pour cet utilisateur Google.");
+          alert("Erreur : Votre profil utilisateur est incomplet en base de données.");
+          return;
+      }
+      console.log("2. Profil trouvé. Statut abonnement :", profile.subscription_status);
+
+
+      if (profile.subscription_status === 'free') {
+        console.log("Statut 'free' détecté. Redirection vers Stripe...");
+        
+        // --- MODIFICATION ICI : On récupère le token d'accès ---
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (!currentSession?.access_token) {
+            alert("Erreur : Impossible de récupérer votre session pour le paiement.");
+            return;
+        }
+
+        // On envoie le token dans le header "Authorization"
+        fetch('/api/stripe/create-checkout', { 
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${currentSession.access_token}`, // <--- LA CLÉ DU SUCCÈS
+            }
+        })
+        .then((res) => res.json())
+        .then((data) => { 
+            if (data.url) { 
+                window.location.href = data.url; 
+            } else {
+                console.error("Erreur Stripe retour:", data);
+                alert("Erreur lors de la création du paiement.");
+            }
+        })
+        .catch((e) => { console.error("Erreur Stripe:", e); alert('Erreur paiement.'); });
+        
+        return;
+      }
+
+      // 3. Demande du nom
+      console.log("3. Statut Pro OK. Demande du nom du projet...");
+      const projectName = window.prompt("Nom du projet :", currentProjectName);
+      if (!projectName) {
+          console.log("Annulation par l'utilisateur (pas de nom entré).");
+          return;
+      }
+
+      // 4. Insertion Supabase
+      console.log(`4. Tentative d'insertion du projet "${projectName}" dans la DB...`);
+      setCurrentProjectName(projectName);
+
+      const { error: saveError, data: savedProject } = await supabase
+        .from('projects')
+        .insert({
+          user_id: session.user.id,
+          gantt_data: JSON.stringify(tasks),
+          project_name: projectName
+        })
+        .select()
+        .single();
+
+      if (saveError) {
+        console.error("ERREUR FATALE lors de l'insertion Supabase :", saveError.message, saveError.details);
+        alert(`Erreur sauvegarde : ${saveError.message}`);
+      }
+      else {
+          console.log("--- SUCCÈS : PROJET SAUVEGARDÉ ! ---", savedProject);
+          alert("Projet sauvegardé avec succès !");
+          if (savedProject) setSavedProjects([savedProject, ...savedProjects]);
+      }
+    };
+  // ... suite du code ...
   
   const handleSignOut = async () => { await supabase.auth.signOut(); };
 

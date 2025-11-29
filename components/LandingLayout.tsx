@@ -4,58 +4,72 @@ import Link from 'next/link';
 
 export default function LandingLayout() {
     return (
-        <main className="flex min-h-screen flex-col items-center bg-white text-slate-900 font-sans">
+        <main className="relative min-h-screen flex flex-col items-center text-slate-900 font-sans overflow-hidden">
             
-            {/* HEADER VITRINE (Light) */}
-            <header className="w-full absolute top-0 left-0 p-6 z-10">
+            {/* --- FOND D'ÉCRAN --- */}
+            <div 
+                className="absolute inset-0 z-0 pointer-events-none"
+                style={{
+                    backgroundImage: "url('/bg-gantt.png')",
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    filter: 'blur(8px)', // Le flou artistique
+                    transform: 'scale(1.1)' // Pour éviter les bords blancs du flou
+                }}
+            />
+            {/* Calque blanc semi-transparent pour la lisibilité */}
+            <div className="absolute inset-0 z-0 bg-white/20 backdrop-blur-sm pointer-events-none"></div>
+
+
+            {/* HEADER VITRINE */}
+            <header className="w-full absolute top-0 left-0 p-6 z-50">
                 <nav className="max-w-7xl mx-auto flex justify-between items-center">
-                    <Link href="/" className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <div className="p-1.5 bg-blue-600 rounded-lg">
-                            {/* Petite icône simple */}
+                    <Link href="/" className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                        <div className="p-1.5 bg-blue-600 rounded-lg shadow-lg">
                             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                         </div>
-                        Gantt<span className="text-blue-600">Intelligent</span>
+                        Gantt<span className="text-blue-700">Intelligent</span>
                     </Link>
 
                     <Link
                         href="/login"
-                        className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg text-sm hover:bg-slate-800 transition-colors shadow-sm"
+                        className="px-5 py-2.5 bg-slate-900 text-white font-medium rounded-lg text-sm hover:bg-slate-800 transition-all shadow-md hover:shadow-lg"
                     >
                         Connexion
                     </Link>
                 </nav>
             </header>
             
-            <div className="pt-40 pb-24 px-6 w-full flex flex-col items-center">
+            <div className="relative z-10 pt-40 pb-24 px-6 w-full flex flex-col items-center">
                 
                 {/* 1. HERO SECTION */}
-                <section className="flex flex-col items-center text-center max-w-4xl">
-                    <div className="inline-block px-3 py-1 mb-6 text-xs font-semibold tracking-wider text-blue-600 uppercase bg-blue-50 rounded-full">
+                <section className="flex flex-col items-center text-center max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                    <div className="inline-block px-4 py-1.5 mb-6 text-xs font-bold tracking-wider text-blue-700 uppercase bg-blue-100/80 backdrop-blur-md rounded-full border border-blue-200">
                         Nouveau : Gestion par IA
                     </div>
-                    <h1 className="text-5xl md:text-7xl font-extrabold mb-8 text-slate-900 tracking-tight leading-tight">
+                    <h1 className="text-5xl md:text-7xl font-extrabold mb-8 text-slate-900 tracking-tight leading-tight drop-shadow-sm">
                         Planifiez vos projets <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
                             sans complexité.
                         </span>
                     </h1>
-                    <p className="text-xl text-slate-500 mb-10 max-w-2xl leading-relaxed">
+                    <p className="text-xl text-slate-600 mb-10 max-w-2xl leading-relaxed font-medium">
                         L'outil de GANTT conçu pour les ingénieurs. Simple, rapide, et esthétique.
                         Oubliez les usines à gaz, concentrez-vous sur la livraison.
                     </p>
                     <Link
                         href="/login"
-                        className="px-8 py-4 bg-blue-600 text-white font-bold rounded-xl text-lg hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-500/30"
+                        className="px-8 py-4 bg-blue-600 text-white font-bold rounded-xl text-lg hover:bg-blue-700 transition-all shadow-xl hover:shadow-blue-500/40 hover:-translate-y-1"
                     >
                         Commencer gratuitement
                     </Link>
                 </section>
 
-                {/* 2. FONCTIONNALITÉS */}
+                {/* 2. FONCTIONNALITÉS (Cartes effet verre) */}
                 <section className="w-full max-w-6xl mt-32">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {/* Feature 1 */}
-                        <div className="p-8 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-100 transition">
+                        <div className="p-8 bg-white/60 backdrop-blur-md rounded-2xl border border-white/50 shadow-lg hover:shadow-xl transition duration-300">
                             <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mb-6 text-2xl">⚡️</div>
                             <h3 className="text-xl font-bold text-slate-800 mb-3">Ultra Rapide</h3>
                             <p className="text-slate-600 leading-relaxed">
@@ -63,7 +77,7 @@ export default function LandingLayout() {
                             </p>
                         </div>
                         {/* Feature 2 */}
-                        <div className="p-8 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-100 transition">
+                        <div className="p-8 bg-white/60 backdrop-blur-md rounded-2xl border border-white/50 shadow-lg hover:shadow-xl transition duration-300">
                             <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mb-6 text-2xl">💾</div>
                             <h3 className="text-xl font-bold text-slate-800 mb-3">Sauvegarde Cloud</h3>
                             <p className="text-slate-600 leading-relaxed">
@@ -71,7 +85,7 @@ export default function LandingLayout() {
                             </p>
                         </div>
                         {/* Feature 3 */}
-                        <div className="p-8 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-100 transition">
+                        <div className="p-8 bg-white/60 backdrop-blur-md rounded-2xl border border-white/50 shadow-lg hover:shadow-xl transition duration-300">
                             <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mb-6 text-2xl">✨</div>
                             <h3 className="text-xl font-bold text-slate-800 mb-3">Esthétique</h3>
                             <p className="text-slate-600 leading-relaxed">
@@ -83,18 +97,18 @@ export default function LandingLayout() {
 
                 {/* 3. TARIFS */}
                 <section className="w-full max-w-5xl mt-32 mb-20">
-                    <h2 className="text-3xl font-bold text-center mb-16 text-slate-900">Un tarif transparent</h2>
+                    <h2 className="text-3xl font-bold text-center mb-16 text-slate-900 drop-shadow-sm">Un tarif transparent</h2>
                     
                     <div className="flex flex-col md:flex-row justify-center gap-8 items-stretch">
                         
                         {/* Gratuit */}
-                        <div className="flex-1 p-8 rounded-2xl border border-slate-200 bg-white">
+                        <div className="flex-1 p-8 rounded-2xl border border-slate-200 bg-white/80 backdrop-blur-md shadow-lg">
                             <h3 className="text-xl font-bold text-slate-800 mb-2">Gratuit</h3>
-                            <div className="text-4xl font-bold mb-6">0€</div>
+                            <div className="text-4xl font-bold mb-6 text-slate-900">0€</div>
                             <ul className="space-y-4 mb-8 text-slate-600">
                                 <li className="flex gap-3"><span className="text-green-500">✓</span> Création illimitée</li>
                                 <li className="flex gap-3"><span className="text-green-500">✓</span> Export visuel</li>
-                                <li className="flex gap-3"><span className="text-slate-300">✕</span> Pas de sauvegarde</li>
+                                <li className="flex gap-3"><span className="text-slate-400">✕</span> Pas de sauvegarde</li>
                             </ul>
                             <Link href="/login" className="block w-full py-3 text-center bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded-lg transition">
                                 Découvrir
@@ -102,8 +116,8 @@ export default function LandingLayout() {
                         </div>
 
                         {/* Pro */}
-                        <div className="flex-1 p-8 rounded-2xl border-2 border-blue-600 bg-blue-50/50 relative">
-                            <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg uppercase">Populaire</div>
+                        <div className="flex-1 p-8 rounded-2xl border-2 border-blue-500 bg-white/90 backdrop-blur-md relative shadow-2xl transform scale-105">
+                            <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg uppercase shadow-sm">Populaire</div>
                             <h3 className="text-xl font-bold text-blue-900 mb-2">Pro</h3>
                             <div className="text-4xl font-bold mb-6 text-blue-600">5€ <span className="text-lg text-slate-500 font-normal">/mois</span></div>
                             <ul className="space-y-4 mb-8 text-slate-700">
@@ -111,7 +125,7 @@ export default function LandingLayout() {
                                 <li className="flex gap-3"><span className="text-blue-600">✓</span> <strong>Sauvegarde Cloud</strong></li>
                                 <li className="flex gap-3"><span className="text-blue-600">✓</span> <strong>Chargement de projets</strong></li>
                             </ul>
-                            <Link href="/login?plan=pro" className="block w-full py-3 text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition shadow-md">
+                            <Link href="/login?plan=pro" className="block w-full py-3 text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition shadow-md hover:shadow-blue-500/30">
                                 Devenir Pro
                             </Link>
                         </div>

@@ -30,7 +30,6 @@ export default function Sidebar({
   
   return (
     <div className="w-full h-full bg-white border-r border-slate-200 p-6 flex flex-col overflow-y-auto gap-8">
-      
       {/* 1. Header & Déconnexion */}
       <div className="pb-4 border-b border-slate-100">
         <h2 className="text-xl font-bold text-slate-800 mb-1">
@@ -61,7 +60,6 @@ export default function Sidebar({
         </h2>
         {projects.length > 0 ? (
             <select 
-                /* CORRECTION : Uniquement text-sm ici */
                 className="w-full p-2 text-sm border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
                 onChange={(e) => handleLoadProject(e.target.value)}
                 defaultValue=""
@@ -76,7 +74,6 @@ export default function Sidebar({
         )}
         <button
           onClick={handleSave}
-          /* CORRECTION : Uniquement text-xs ici pour le bouton */
           className={`w-full mt-3 px-3 py-2 text-xs font-bold text-white uppercase tracking-wider rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 ${
             isPro ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
           }`}
@@ -110,7 +107,7 @@ export default function Sidebar({
           <Plus className="w-4 h-4" /> Édition Manuelle
         </h2>
         <textarea
-          className="grow w-full p-3 text-sm border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono leading-relaxed resize-none"
+          className="grow w-full p-3 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono text-xs leading-relaxed resize-none"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder="Format: ID, Nom, Début, Fin, Dépendance"

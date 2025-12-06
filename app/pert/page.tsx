@@ -127,7 +127,7 @@ export default function PERTBuilder() {
   const [newTask, setNewTask] = useState({ id: '', name: '', duration: 1, predecessors: '' });
   const [error, setError] = useState<string | null>(null);
 
-  // CORRECTION ICI : Ajout de criticalPath dans le destructuring
+  // CORRECTION CRUCIALE : on récupère bien criticalPath
   const { computedTasks, maxDuration, hasCycle, criticalPath } = useMemo(() => calculatePERT(tasks), [tasks]);
 
   const addTask = (e: React.FormEvent) => {
@@ -397,7 +397,7 @@ export default function PERTBuilder() {
                 <div className="space-y-2">
                     {/* @ts-ignore */}
                     {tasks.map(t => {
-                        // CORRECTION : On vérifie l'appartenance au chemin critique ICI
+                        // CORRECTION CRUCIALE ICI : On utilise includes() et pas .isCritical
                         const isCrit = criticalPath.includes(t.id);
                         return (
                             <div key={t.id} className={`p-3 rounded-lg border flex justify-between items-center group transition-all ${isCrit ? 'bg-red-50 border-red-100' : 'bg-white border-slate-200'}`}>

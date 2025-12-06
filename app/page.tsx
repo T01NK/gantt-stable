@@ -9,7 +9,7 @@ import { useSupabase } from '../components/SupabaseProvider';
 import type { Session } from '@supabase/supabase-js'; 
 import { useSearchParams, useRouter } from 'next/navigation';
 import LandingLayout from '../components/LandingLayout';
-import Sidebar from '../components/Sidebar'; // On l'importe et on va enfin l'utiliser !
+import Sidebar from '../components/Sidebar';
 
 // Type pour une tâche du GANTT
 interface GanttTask {
@@ -34,10 +34,16 @@ function HomeContent() {
     { id: 1, name: "Exemple: Analyse", start: "2025-11-20", end: "2025-11-23", color: "bg-blue-500" },
   ]);
   
-  // États pour la Sidebar connectée
+  // États pour la Sidebar
   const [savedProjects, setSavedProjects] = useState<SavedProject[]>([]);
-  const [inputText, setInputText] = useState(""); // Pour l'édition manuelle
-  const [isPro, setIsPro] = useState(false); // Pour le statut abonnement
+  const [isPro, setIsPro] = useState(false); 
+
+  // --- NOUVEAU : État pour le formulaire d'ajout manuel ---
+  const [newTask, setNewTask] = useState({
+    name: "",
+    start: new Date().toISOString().split('T')[0],
+    end: new Date(Date.now() + 86400000 * 5).toISOString().split('T')[0]
+  });
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -61,7 +67,6 @@ function HomeContent() {
     return () => subscription.unsubscribe();
   }, [supabase]);
 
-  // Vérifier le statut Pro au chargement
   const checkUserStatus = async (userId: string) => {
       const { data } = await supabase.from('profiles').select('subscription_status').eq('id', userId).single();
       if (data && data.subscription_status === 'pro') {
@@ -69,7 +74,6 @@ function HomeContent() {
       }
   };
 
-  // Gestion Redirection Pro (Inchangée)
   useEffect(() => {
     const plan = searchParams.get('plan');
     if (plan === 'pro' && session && !loading && !checkoutTriggered.current) {
@@ -87,7 +91,6 @@ function HomeContent() {
     }
   }, [session, loading, searchParams, supabase, router]);
 
-  // Chargement des projets
   useEffect(() => {
     const fetchProjectList = async () => {
       if (!session) return;
@@ -100,7 +103,6 @@ function HomeContent() {
   // --- ACTIONS ---
 
   const handleLoadProject = (projectId: any) => {
-    // Conversion ID string -> number si besoin
     const id = typeof projectId === 'string' ? parseInt(projectId) : projectId;
     const projectToLoad = savedProjects.find(p => p.id === id);
     
@@ -121,7 +123,6 @@ function HomeContent() {
       if (!session?.user) return;
 
       if (!isPro) {
-        // Redirection paiement si Free
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         if (!currentSession?.access_token) return alert("Erreur session.");
         
@@ -135,7 +136,6 @@ function HomeContent() {
         return;
       }
 
-      // Sauvegarde si Pro
       const projectName = window.prompt("Nom du projet :", currentProjectName);
       if (!projectName) return;
       setCurrentProjectName(projectName);
@@ -152,27 +152,18 @@ function HomeContent() {
       }
   };
 
-  // Parser simple pour le mode manuel (Text Area)
-  const handleGenerateGantt = () => {
-      if (!inputText) return;
-      // Format attendu: ID, Nom, Début, Fin
-      const lines = inputText.split('\n');
-      const newTasks: GanttTask[] = [];
-      
-      lines.forEach((line, index) => {
-          const parts = line.split(',');
-          if (parts.length >= 3) {
-              newTasks.push({
-                  id: Date.now() + index,
-                  name: parts[1]?.trim() || parts[0]?.trim(),
-                  start: parts[2]?.trim() || new Date().toISOString().split('T')[0],
-                  end: parts[3]?.trim() || new Date().toISOString().split('T')[0],
-                  color: "bg-blue-500"
-              });
-          }
-      });
-      
-      if (newTasks.length > 0) setTasks(newTasks);
+  // --- FONCTION D'AJOUT MANUEL (Restaurée) ---
+  const handleAddTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTask.name || !newTask.start || !newTask.end) return;
+    if (new Date(newTask.end) < new Date(newTask.start)) {
+      alert("La fin doit être après le début !"); return;
+    }
+    const colors = ["bg-blue-500", "bg-purple-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500", "bg-cyan-500"];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    
+    setTasks([...tasks, { ...newTask, id: Date.now(), color: randomColor }]);
+    setNewTask({ ...newTask, name: "" }); // On garde les dates pour enchainer
   };
 
   const handleDeleteTask = (id: number) => {
@@ -290,24 +281,23 @@ function HomeContent() {
 
       <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
         
-        {/* --- C'EST ICI QUE TOUT CHANGE --- */}
-        {/* On remplace l'ancienne <aside> par notre vrai composant connecté */}
         <aside className="w-full md:w-80 bg-white border-r border-slate-200 overflow-y-auto shrink-0 z-10 flex flex-col h-full">
             <Sidebar 
-                inputText={inputText}
-                setInputText={setInputText}
-                projects={savedProjects as any} // Cast pour éviter les soucis de typage stricts
+                // Props pour le formulaire manuel
+                newTask={newTask}
+                setNewTask={setNewTask}
+                handleAddTask={handleAddTask}
+
+                projects={savedProjects as any} 
                 handleLoadProject={handleLoadProject}
-                handleGenerateGantt={handleGenerateGantt}
                 handleSave={handleSave}
                 isPro={isPro}
                 userEmail={session.user.email || ''}
                 handleSignOut={handleSignOut}
-                setTasks={setTasks}
             />
         </aside>
 
-        {/* VISUALISATION GANTT (Inchangée) */}
+        {/* VISUALISATION GANTT */}
         <section className="flex-1 overflow-auto bg-slate-100 relative">
           <div className="min-w-max p-8">
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden relative select-none">

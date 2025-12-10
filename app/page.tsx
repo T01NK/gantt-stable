@@ -30,7 +30,7 @@ function HomeContent() {
   
   // --- ÉTATS DE L'APPLICATION ---
   const [currentProjectName, setCurrentProjectName] = useState("Nouveau Projet");
-  // NOUVEAU : On stocke l'ID pour savoir si on met à jour ou si on crée
+  // ID du projet actuel (null = nouveau projet non sauvegardé)
   const [currentProjectId, setCurrentProjectId] = useState<number | null>(null); 
 
   const [tasks, setTasks] = useState<GanttTask[]>([
@@ -115,7 +115,7 @@ function HomeContent() {
             if (Array.isArray(loadedTasks)) {
                 setTasks(loadedTasks);
                 setCurrentProjectName(projectToLoad.project_name || "Projet Sans Nom");
-                setCurrentProjectId(id); // IMPORTANT : On retient l'ID du projet chargé
+                setCurrentProjectId(id); // On mémorise l'ID pour savoir qu'on est en mode "édition"
             }
         } catch (e) {
             alert("Erreur lors de la lecture des données du projet.");
@@ -140,7 +140,6 @@ function HomeContent() {
         return;
       }
 
-      // On demande le nom (pré-rempli) pour confirmer ou renommer
       const projectName = window.prompt("Nom du projet :", currentProjectName);
       if (!projectName) return;
       setCurrentProjectName(projectName);
@@ -148,64 +147,67 @@ function HomeContent() {
       let error, savedProject;
 
       if (currentProjectId) {
-          // --- CAS 1 : MISE À JOUR (UPDATE) ---
+          // --- MISE À JOUR ---
           const response = await supabase
             .from('projects')
-            .update({ 
-                gantt_data: JSON.stringify(tasks), 
-                project_name: projectName 
-            })
+            .update({ gantt_data: JSON.stringify(tasks), project_name: projectName })
             .eq('id', currentProjectId)
-            .select()
-            .single();
-          
-          error = response.error;
-          savedProject = response.data;
-
+            .select().single();
+          error = response.error; savedProject = response.data;
       } else {
-          // --- CAS 2 : CRÉATION (INSERT) ---
+          // --- CRÉATION ---
           const response = await supabase
             .from('projects')
-            .insert({ 
-                user_id: session.user.id, 
-                gantt_data: JSON.stringify(tasks), 
-                project_name: projectName 
-            })
-            .select()
-            .single();
-
-          error = response.error;
-          savedProject = response.data;
+            .insert({ user_id: session.user.id, gantt_data: JSON.stringify(tasks), project_name: projectName })
+            .select().single();
+          error = response.error; savedProject = response.data;
       }
 
-      if (error) {
-          alert(`Erreur sauvegarde : ${error.message}`);
-      } else {
+      if (error) alert(`Erreur sauvegarde : ${error.message}`);
+      else {
           alert(currentProjectId ? "Projet mis à jour !" : "Nouveau projet créé !");
-          
           if (savedProject) {
               if (currentProjectId) {
-                  // On met à jour la liste locale sans recharger
                   setSavedProjects(prev => prev.map(p => p.id === savedProject.id ? savedProject : p));
               } else {
-                  // On ajoute le nouveau projet à la liste
                   setSavedProjects([savedProject, ...savedProjects]);
-                  // On passe en mode "édition" de ce nouveau projet
                   setCurrentProjectId(savedProject.id); 
               }
           }
       }
   };
 
+  // --- NOUVEAU : FONCTION DE SUPPRESSION ---
+  const handleDeleteProject = async (projectId: number) => {
+      if (!window.confirm("Êtes-vous sûr de vouloir supprimer DÉFINITIVEMENT ce projet ?")) return;
+
+      const { error } = await supabase
+          .from('projects')
+          .delete()
+          .eq('id', projectId);
+
+      if (error) {
+          alert("Erreur lors de la suppression.");
+      } else {
+          // Mise à jour de la liste locale
+          setSavedProjects(prev => prev.filter(p => p.id !== projectId));
+          
+          // Si on supprime le projet qu'on est en train de regarder, on reset tout
+          if (currentProjectId === projectId) {
+              setCurrentProjectId(null);
+              setCurrentProjectName("Nouveau Projet");
+              setTasks([{ id: Date.now(), name: "Nouveau Projet", start: new Date().toISOString().split('T')[0], end: new Date().toISOString().split('T')[0], color: "bg-blue-500" }]);
+          }
+          alert("Projet supprimé.");
+      }
+  };
+
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTask.name || !newTask.start || !newTask.end) return;
-    if (new Date(newTask.end) < new Date(newTask.start)) {
-      alert("La fin doit être après le début !"); return;
-    }
+    if (new Date(newTask.end) < new Date(newTask.start)) { alert("La fin doit être après le début !"); return; }
     const colors = ["bg-blue-500", "bg-purple-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500", "bg-cyan-500"];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    
     setTasks([...tasks, { ...newTask, id: Date.now(), color: randomColor }]);
     setNewTask({ ...newTask, name: "" }); 
   };
@@ -240,10 +242,7 @@ function HomeContent() {
     const days = [];
     const current = new Date(dateRange.start);
     const end = new Date(dateRange.end);
-    while (current <= end) {
-      days.push(new Date(current));
-      current.setDate(current.getDate() + 1);
-    }
+    while (current <= end) { days.push(new Date(current)); current.setDate(current.getDate() + 1); }
     return days;
   }, [dateRange]);
 
@@ -254,40 +253,20 @@ function HomeContent() {
     let currentYear = allDays[0].getFullYear();
     let count = 0;
     allDays.forEach((day) => {
-      if (day.getMonth() === currentMonth && day.getFullYear() === currentYear) {
-        count++;
-      } else {
-        groups.push({
-          key: `${currentYear}-${currentMonth}`,
-          count: count,
-          label: new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date(currentYear, currentMonth))
-        });
-        currentMonth = day.getMonth();
-        currentYear = day.getFullYear();
-        count = 1;
+      if (day.getMonth() === currentMonth && day.getFullYear() === currentYear) { count++; } else {
+        groups.push({ key: `${currentYear}-${currentMonth}`, count: count, label: new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date(currentYear, currentMonth)) });
+        currentMonth = day.getMonth(); currentYear = day.getFullYear(); count = 1;
       }
     });
-    groups.push({
-      key: `${currentYear}-${currentMonth}`,
-      count: count,
-      label: new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date(currentYear, currentMonth))
-    });
+    groups.push({ key: `${currentYear}-${currentMonth}`, count: count, label: new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date(currentYear, currentMonth)) });
     return groups;
   }, [allDays]);
 
   const formatDateFr = (date: Date) => new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit' }).format(date);
   const formatDateFull = (date: Date) => new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long' }).format(date);
   const getDayName = (date: Date) => new Intl.DateTimeFormat('fr-FR', { weekday: 'short' }).format(date);
-  
-  const getDurationInDays = (start: string, end: string) => {
-    const diffTime = Math.abs(new Date(end).getTime() - new Date(start).getTime());
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-  };
-
-  const getOffsetInDays = (globalStart: Date, taskStart: string) => {
-    const diffTime = new Date(taskStart).getTime() - globalStart.getTime();
-    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  };
+  const getDurationInDays = (start: string, end: string) => Math.ceil(Math.abs(new Date(end).getTime() - new Date(start).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  const getOffsetInDays = (globalStart: Date, taskStart: string) => Math.floor((new Date(taskStart).getTime() - globalStart.getTime()) / (1000 * 60 * 60 * 24));
 
   // ---------------------------------------------------------
   // 4. RENDU
@@ -327,7 +306,6 @@ function HomeContent() {
         
         <aside className="w-full md:w-80 bg-white border-r border-slate-200 overflow-y-auto shrink-0 z-10 flex flex-col h-full">
             <Sidebar 
-                // Props pour le formulaire manuel
                 newTask={newTask}
                 setNewTask={setNewTask}
                 handleAddTask={handleAddTask}
@@ -335,6 +313,11 @@ function HomeContent() {
                 projects={savedProjects as any} 
                 handleLoadProject={handleLoadProject}
                 handleSave={handleSave}
+                
+                // NOUVEAU : On passe la fonction de suppression et l'ID actuel
+                handleDeleteProject={handleDeleteProject}
+                currentProjectId={currentProjectId}
+
                 isPro={isPro}
                 userEmail={session.user.email || ''}
                 handleSignOut={handleSignOut}
@@ -352,16 +335,12 @@ function HomeContent() {
                    <div className="shrink-0 border-r border-slate-200 bg-slate-50" style={{ width: leftColumnWidth }}></div>
                    <div className="flex">
                       {months.map((m: any, i: number) => (
-                        <div key={i} className="shrink-0 border-r border-slate-200 bg-white text-xs font-bold text-slate-600 flex items-center justify-center uppercase tracking-wider" style={{ width: m.count * cellWidth, height: 32 }}>
-                          {m.label}
-                        </div>
+                        <div key={i} className="shrink-0 border-r border-slate-200 bg-white text-xs font-bold text-slate-600 flex items-center justify-center uppercase tracking-wider" style={{ width: m.count * cellWidth, height: 32 }}>{m.label}</div>
                       ))}
                    </div>
                 </div>
                 <div className="flex border-b border-slate-200">
-                  <div className="shrink-0 border-r border-slate-200 bg-slate-50 p-3 font-bold text-slate-500 text-sm flex items-center justify-center" style={{ width: leftColumnWidth }}>
-                    Tâches
-                  </div>
+                  <div className="shrink-0 border-r border-slate-200 bg-slate-50 p-3 font-bold text-slate-500 text-sm flex items-center justify-center" style={{ width: leftColumnWidth }}>Tâches</div>
                   <div className="flex">
                     {allDays.map((day, i) => {
                        const isWeekend = day.getDay() === 0 || day.getDay() === 6;
@@ -378,67 +357,39 @@ function HomeContent() {
 
               {/* CORPS GANTT */}
               <div className="relative">
-                {/* Grille de fond */}
                 <div className="absolute inset-0 flex pointer-events-none" style={{ paddingLeft: leftColumnWidth }}>
                    {allDays.map((day, i) => {
                      const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-                     return (
-                      <div key={`grid-${i}`} className={`shrink-0 border-r border-slate-100 h-full ${isWeekend ? 'bg-slate-50/50' : ''}`} style={{ width: cellWidth }} />
-                    );
+                     return (<div key={`grid-${i}`} className={`shrink-0 border-r border-slate-100 h-full ${isWeekend ? 'bg-slate-50/50' : ''}`} style={{ width: cellWidth }} />);
                    })}
                 </div>
 
-                {/* Liste des Tâches */}
                 {tasks.map(task => {
                   const offsetDays = getOffsetInDays(dateRange.start, task.start);
                   const durationDays = getDurationInDays(task.start, task.end);
-                  
                   return (
                     <div key={task.id} className="flex border-b border-slate-100 hover:bg-blue-50/30 transition relative group h-12">
                       <div className="shrink-0 border-r border-slate-200 p-3 text-sm font-medium text-slate-700 truncate bg-white/95 sticky left-0 z-10 flex items-center justify-between" style={{ width: leftColumnWidth }}>
                         <span className="truncate pr-2" title={task.name}>{task.name}</span>
-                        {/* Bouton Supprimer */}
-                        <button onClick={() => handleDeleteTask(task.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">
-                            <Trash2 className="w-4 h-4" />
-                        </button>
+                        <button onClick={() => handleDeleteTask(task.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><Trash2 className="w-4 h-4" /></button>
                       </div>
-
                       <div className="grow relative">
-                        <div 
-                          className={`absolute top-2 h-8 rounded shadow-sm border border-white/20 ${task.color} hover:brightness-110 transition cursor-pointer flex items-center px-2 text-white text-xs font-medium overflow-hidden whitespace-nowrap`}
-                          style={{
-                            left: offsetDays * cellWidth,
-                            width: durationDays * cellWidth,
-                          }}
-                          title={`${task.name} (${formatDateFull(new Date(task.start))} - ${formatDateFull(new Date(task.end))})`}
-                        >
+                        <div className={`absolute top-2 h-8 rounded shadow-sm border border-white/20 ${task.color} hover:brightness-110 transition cursor-pointer flex items-center px-2 text-white text-xs font-medium overflow-hidden whitespace-nowrap`}
+                          style={{ left: offsetDays * cellWidth, width: durationDays * cellWidth }} title={`${task.name} (${formatDateFull(new Date(task.start))} - ${formatDateFull(new Date(task.end))})`}>
                           {durationDays > 1 && task.name}
                         </div>
                       </div>
                     </div>
                   );
                 })}
-                
-                {tasks.length === 0 && (
-                  <div className="p-10 text-center text-slate-400">
-                    Utilisez le menu à gauche pour ajouter une tâche manuellement.
-                  </div>
-                )}
+                {tasks.length === 0 && (<div className="p-10 text-center text-slate-400">Utilisez le menu à gauche pour ajouter une tâche manuellement.</div>)}
               </div>
-
             </div>
           </div>
         </section>
-
       </div>
     </div>
   );
 }
 
-export default function Home() {
-    return (
-        <Suspense>
-            <HomeContent />
-        </Suspense>
-    );
-}
+export default function Home() { return <Suspense><HomeContent /></Suspense>; }

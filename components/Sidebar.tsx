@@ -1,17 +1,14 @@
 import React from 'react';
 import type { Project } from '../utils/appTypes'; 
 import Link from 'next/link';
-import { FolderOpen, Plus, LogOut, Network, BarChart3 } from 'lucide-react';
+import { FolderOpen, Plus, LogOut, Network, BarChart3, Trash2 } from 'lucide-react';
 
 interface SidebarProps {
-  // Mode d'affichage (Gantt par défaut)
   mode?: 'gantt' | 'pert';
 
-  // Props pour la tâche (GANTT)
   newTask?: { name: string; start: string; end: string };
   setNewTask?: (task: { name: string; start: string; end: string }) => void;
   
-  // Props pour la tâche (PERT)
   newPertTask?: { id: string; name: string; duration: number; predecessors: string };
   setNewPertTask?: (task: any) => void;
 
@@ -20,13 +17,18 @@ interface SidebarProps {
   projects: Project[];
   handleLoadProject: (projectId: string) => void;
   handleSave: () => void;
+  
+  // NOUVEAU : Fonction de suppression (Optionnelle pour ne pas casser le mode PERT)
+  handleDeleteProject?: (id: number) => void;
+  currentProjectId?: number | null;
+
   isPro: boolean; 
   userEmail: string;
   handleSignOut: () => void;
 }
 
 export default function Sidebar({
-  mode = 'gantt', // Par défaut
+  mode = 'gantt', 
   newTask,
   setNewTask,
   newPertTask,
@@ -35,6 +37,11 @@ export default function Sidebar({
   projects,
   handleLoadProject,
   handleSave,
+  
+  // On récupère les nouvelles props
+  handleDeleteProject,
+  currentProjectId,
+
   isPro,
   userEmail,
   handleSignOut,
@@ -93,9 +100,19 @@ export default function Sidebar({
         >
           {isPro ? `Sauvegarder ${mode === 'pert' ? 'PERT' : 'Projet'}` : 'Débloquer Pro (5€)'}
         </button>
+
+        {/* BOUTON SUPPRIMER (Apparaît seulement si un projet est chargé) */}
+        {currentProjectId && handleDeleteProject && mode === 'gantt' && (
+            <button
+                onClick={() => handleDeleteProject(currentProjectId)}
+                className="w-full mt-2 px-3 py-2 text-xs font-bold text-red-600 border border-red-200 hover:bg-red-50 rounded-lg transition-all flex items-center justify-center gap-2"
+            >
+                <Trash2 className="w-3 h-3" /> Supprimer ce projet
+            </button>
+        )}
       </div>
 
-      {/* 3. FORMULAIRE INTELLIGENT (Change selon le mode) */}
+      {/* 3. FORMULAIRE INTELLIGENT */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-3 flex items-center gap-2">
             <Plus className="w-4 h-4" /> {mode === 'gantt' ? 'Ajouter Tâche' : 'Ajouter Noeud'}
@@ -103,7 +120,7 @@ export default function Sidebar({
         
         <form onSubmit={handleAddTask} className="space-y-3">
             
-            {/* MODE GANTT : NOM + DATES */}
+            {/* MODE GANTT */}
             {mode === 'gantt' && newTask && setNewTask && (
                 <>
                     <div>
@@ -126,7 +143,7 @@ export default function Sidebar({
                 </>
             )}
 
-            {/* MODE PERT : ID + NOM + DURÉE + PRÉDÉCESSEURS */}
+            {/* MODE PERT */}
             {mode === 'pert' && newPertTask && setNewPertTask && (
                 <>
                     <div className="grid grid-cols-4 gap-2">

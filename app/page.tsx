@@ -30,6 +30,9 @@ function HomeContent() {
   
   // --- ÉTATS DE L'APPLICATION ---
   const [currentProjectName, setCurrentProjectName] = useState("Nouveau Projet");
+  // NOUVEAU : On stocke l'ID pour savoir si on met à jour ou si on crée
+  const [currentProjectId, setCurrentProjectId] = useState<number | null>(null); 
+
   const [tasks, setTasks] = useState<GanttTask[]>([
     { id: 1, name: "Exemple: Analyse", start: "2025-11-20", end: "2025-11-23", color: "bg-blue-500" },
   ]);
@@ -38,7 +41,7 @@ function HomeContent() {
   const [savedProjects, setSavedProjects] = useState<SavedProject[]>([]);
   const [isPro, setIsPro] = useState(false); 
 
-  // --- NOUVEAU : État pour le formulaire d'ajout manuel ---
+  // État pour le formulaire d'ajout manuel
   const [newTask, setNewTask] = useState({
     name: "",
     start: new Date().toISOString().split('T')[0],
@@ -112,6 +115,7 @@ function HomeContent() {
             if (Array.isArray(loadedTasks)) {
                 setTasks(loadedTasks);
                 setCurrentProjectName(projectToLoad.project_name || "Projet Sans Nom");
+                setCurrentProjectId(id); // IMPORTANT : On retient l'ID du projet chargé
             }
         } catch (e) {
             alert("Erreur lors de la lecture des données du projet.");
@@ -136,23 +140,63 @@ function HomeContent() {
         return;
       }
 
+      // On demande le nom (pré-rempli) pour confirmer ou renommer
       const projectName = window.prompt("Nom du projet :", currentProjectName);
       if (!projectName) return;
       setCurrentProjectName(projectName);
 
-      const { error, data: savedProject } = await supabase
-        .from('projects')
-        .insert({ user_id: session.user.id, gantt_data: JSON.stringify(tasks), project_name: projectName })
-        .select().single();
+      let error, savedProject;
 
-      if (error) alert(`Erreur sauvegarde : ${error.message}`);
-      else {
-          alert("Projet sauvegardé !");
-          if (savedProject) setSavedProjects([savedProject, ...savedProjects]);
+      if (currentProjectId) {
+          // --- CAS 1 : MISE À JOUR (UPDATE) ---
+          const response = await supabase
+            .from('projects')
+            .update({ 
+                gantt_data: JSON.stringify(tasks), 
+                project_name: projectName 
+            })
+            .eq('id', currentProjectId)
+            .select()
+            .single();
+          
+          error = response.error;
+          savedProject = response.data;
+
+      } else {
+          // --- CAS 2 : CRÉATION (INSERT) ---
+          const response = await supabase
+            .from('projects')
+            .insert({ 
+                user_id: session.user.id, 
+                gantt_data: JSON.stringify(tasks), 
+                project_name: projectName 
+            })
+            .select()
+            .single();
+
+          error = response.error;
+          savedProject = response.data;
+      }
+
+      if (error) {
+          alert(`Erreur sauvegarde : ${error.message}`);
+      } else {
+          alert(currentProjectId ? "Projet mis à jour !" : "Nouveau projet créé !");
+          
+          if (savedProject) {
+              if (currentProjectId) {
+                  // On met à jour la liste locale sans recharger
+                  setSavedProjects(prev => prev.map(p => p.id === savedProject.id ? savedProject : p));
+              } else {
+                  // On ajoute le nouveau projet à la liste
+                  setSavedProjects([savedProject, ...savedProjects]);
+                  // On passe en mode "édition" de ce nouveau projet
+                  setCurrentProjectId(savedProject.id); 
+              }
+          }
       }
   };
 
-  // --- FONCTION D'AJOUT MANUEL (Restaurée) ---
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTask.name || !newTask.start || !newTask.end) return;
@@ -163,7 +207,7 @@ function HomeContent() {
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
     
     setTasks([...tasks, { ...newTask, id: Date.now(), color: randomColor }]);
-    setNewTask({ ...newTask, name: "" }); // On garde les dates pour enchainer
+    setNewTask({ ...newTask, name: "" }); 
   };
 
   const handleDeleteTask = (id: number) => {

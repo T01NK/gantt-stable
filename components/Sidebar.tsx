@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Project } from '../utils/appTypes'; 
 import Link from 'next/link';
-import { FolderOpen, Plus, LogOut, Network, BarChart3, Trash2 } from 'lucide-react';
+import { FolderOpen, Plus, LogOut, Network, BarChart3, Trash2, ArrowDownAZ } from 'lucide-react';
 
 interface SidebarProps {
   mode?: 'gantt' | 'pert';
@@ -13,12 +13,14 @@ interface SidebarProps {
   setNewPertTask?: (task: any) => void;
 
   handleAddTask: (e: React.FormEvent) => void;
+  
+  // NOUVEAU : Fonction de tri
+  handleSortTasks?: () => void;
 
   projects: Project[];
   handleLoadProject: (projectId: string) => void;
   handleSave: () => void;
   
-  // NOUVEAU : Fonction de suppression (Optionnelle pour ne pas casser le mode PERT)
   handleDeleteProject?: (id: number) => void;
   currentProjectId?: number | null;
 
@@ -34,14 +36,12 @@ export default function Sidebar({
   newPertTask,
   setNewPertTask,
   handleAddTask,
+  handleSortTasks, // On récupère la fonction
   projects,
   handleLoadProject,
   handleSave,
-  
-  // On récupère les nouvelles props
   handleDeleteProject,
   currentProjectId,
-
   isPro,
   userEmail,
   handleSignOut,
@@ -101,7 +101,6 @@ export default function Sidebar({
           {isPro ? `Sauvegarder ${mode === 'pert' ? 'PERT' : 'Projet'}` : 'Débloquer Pro (5€)'}
         </button>
 
-        {/* BOUTON SUPPRIMER (Apparaît seulement si un projet est chargé) */}
         {currentProjectId && handleDeleteProject && mode === 'gantt' && (
             <button
                 onClick={() => handleDeleteProject(currentProjectId)}
@@ -172,6 +171,17 @@ export default function Sidebar({
             <button type="submit" className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 text-sm shadow-sm">
                 <Plus className="w-4 h-4" /> Ajouter
             </button>
+
+            {/* NOUVEAU : BOUTON DE TRI (Uniquement en mode GANTT) */}
+            {mode === 'gantt' && handleSortTasks && (
+                <button 
+                    type="button" // Important pour ne pas soumettre le formulaire
+                    onClick={handleSortTasks}
+                    className="w-full mt-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 text-xs shadow-sm"
+                >
+                    <ArrowDownAZ className="w-4 h-4 text-blue-500" /> Trier par date
+                </button>
+            )}
         </form>
       </div>
     </div>

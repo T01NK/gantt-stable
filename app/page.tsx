@@ -30,7 +30,6 @@ function HomeContent() {
   
   // --- ÉTATS DE L'APPLICATION ---
   const [currentProjectName, setCurrentProjectName] = useState("Nouveau Projet");
-  // ID du projet actuel (null = nouveau projet non sauvegardé)
   const [currentProjectId, setCurrentProjectId] = useState<number | null>(null); 
 
   const [tasks, setTasks] = useState<GanttTask[]>([
@@ -115,7 +114,7 @@ function HomeContent() {
             if (Array.isArray(loadedTasks)) {
                 setTasks(loadedTasks);
                 setCurrentProjectName(projectToLoad.project_name || "Projet Sans Nom");
-                setCurrentProjectId(id); // On mémorise l'ID pour savoir qu'on est en mode "édition"
+                setCurrentProjectId(id); 
             }
         } catch (e) {
             alert("Erreur lors de la lecture des données du projet.");
@@ -147,7 +146,6 @@ function HomeContent() {
       let error, savedProject;
 
       if (currentProjectId) {
-          // --- MISE À JOUR ---
           const response = await supabase
             .from('projects')
             .update({ gantt_data: JSON.stringify(tasks), project_name: projectName })
@@ -155,7 +153,6 @@ function HomeContent() {
             .select().single();
           error = response.error; savedProject = response.data;
       } else {
-          // --- CRÉATION ---
           const response = await supabase
             .from('projects')
             .insert({ user_id: session.user.id, gantt_data: JSON.stringify(tasks), project_name: projectName })
@@ -177,22 +174,15 @@ function HomeContent() {
       }
   };
 
-  // --- NOUVEAU : FONCTION DE SUPPRESSION ---
   const handleDeleteProject = async (projectId: number) => {
       if (!window.confirm("Êtes-vous sûr de vouloir supprimer DÉFINITIVEMENT ce projet ?")) return;
 
-      const { error } = await supabase
-          .from('projects')
-          .delete()
-          .eq('id', projectId);
+      const { error } = await supabase.from('projects').delete().eq('id', projectId);
 
       if (error) {
           alert("Erreur lors de la suppression.");
       } else {
-          // Mise à jour de la liste locale
           setSavedProjects(prev => prev.filter(p => p.id !== projectId));
-          
-          // Si on supprime le projet qu'on est en train de regarder, on reset tout
           if (currentProjectId === projectId) {
               setCurrentProjectId(null);
               setCurrentProjectName("Nouveau Projet");
@@ -210,6 +200,14 @@ function HomeContent() {
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
     setTasks([...tasks, { ...newTask, id: Date.now(), color: randomColor }]);
     setNewTask({ ...newTask, name: "" }); 
+  };
+
+  // --- NOUVEAU : FONCTION DE TRI ---
+  const handleSortTasks = () => {
+      const sortedTasks = [...tasks].sort((a, b) => {
+          return new Date(a.start).getTime() - new Date(b.start).getTime();
+      });
+      setTasks(sortedTasks);
   };
 
   const handleDeleteTask = (id: number) => {
@@ -309,12 +307,14 @@ function HomeContent() {
                 newTask={newTask}
                 setNewTask={setNewTask}
                 handleAddTask={handleAddTask}
+                
+                // On passe la fonction de tri ici
+                handleSortTasks={handleSortTasks}
 
                 projects={savedProjects as any} 
                 handleLoadProject={handleLoadProject}
                 handleSave={handleSave}
                 
-                // NOUVEAU : On passe la fonction de suppression et l'ID actuel
                 handleDeleteProject={handleDeleteProject}
                 currentProjectId={currentProjectId}
 

@@ -146,27 +146,47 @@ function HomeContent() {
       let error, savedProject;
 
       if (currentProjectId) {
+          // --- CAS 1 : MISE À JOUR (Correctif ici : on retire .single()) ---
           const response = await supabase
             .from('projects')
-            .update({ gantt_data: JSON.stringify(tasks), project_name: projectName })
+            .update({ 
+                gantt_data: JSON.stringify(tasks), 
+                project_name: projectName 
+            })
             .eq('id', currentProjectId)
-            .select().single();
-          error = response.error; savedProject = response.data;
+            .select(); // On retire .single() pour éviter l'erreur "Cannot coerce..."
+          
+          error = response.error;
+          // On prend le premier élément du tableau manuellement
+          savedProject = response.data ? response.data[0] : null;
+
       } else {
+          // --- CAS 2 : CRÉATION ---
           const response = await supabase
             .from('projects')
-            .insert({ user_id: session.user.id, gantt_data: JSON.stringify(tasks), project_name: projectName })
-            .select().single();
-          error = response.error; savedProject = response.data;
+            .insert({ 
+                user_id: session.user.id, 
+                gantt_data: JSON.stringify(tasks), 
+                project_name: projectName 
+            })
+            .select()
+            .single(); // Ici .single() est ok car l'insert renvoie toujours 1 ligne
+
+          error = response.error;
+          savedProject = response.data;
       }
 
-      if (error) alert(`Erreur sauvegarde : ${error.message}`);
-      else {
+      if (error) {
+          alert(`Erreur sauvegarde : ${error.message}`);
+      } else {
           alert(currentProjectId ? "Projet mis à jour !" : "Nouveau projet créé !");
+          
           if (savedProject) {
               if (currentProjectId) {
+                  // Mise à jour locale
                   setSavedProjects(prev => prev.map(p => p.id === savedProject.id ? savedProject : p));
               } else {
+                  // Ajout local
                   setSavedProjects([savedProject, ...savedProjects]);
                   setCurrentProjectId(savedProject.id); 
               }
@@ -202,7 +222,6 @@ function HomeContent() {
     setNewTask({ ...newTask, name: "" }); 
   };
 
-  // --- NOUVEAU : FONCTION DE TRI ---
   const handleSortTasks = () => {
       const sortedTasks = [...tasks].sort((a, b) => {
           return new Date(a.start).getTime() - new Date(b.start).getTime();
@@ -308,7 +327,6 @@ function HomeContent() {
                 setNewTask={setNewTask}
                 handleAddTask={handleAddTask}
                 
-                // On passe la fonction de tri ici
                 handleSortTasks={handleSortTasks}
 
                 projects={savedProjects as any} 
